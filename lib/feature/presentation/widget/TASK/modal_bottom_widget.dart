@@ -1,13 +1,13 @@
 import 'package:eyot/feature/presentation/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ModalBottomSheet extends StatelessWidget {
   ModalBottomSheet({super.key});
 
   final controller = Get.find<HomeController>();
   final priorities = ['Low', 'Medium', 'High'];
-  final categories = ['Skripsi', 'Tugas Kuliah', 'Inframe', 'Main Job'];
 
   final TextEditingController titleController = TextEditingController();
 
@@ -48,7 +48,6 @@ class ModalBottomSheet extends StatelessWidget {
               ),
               onChanged: (value) => controller.title.value = value,
             ),
-
             const SizedBox(height: 24),
 
             const Text("Category", style: TextStyle(color: Colors.black)),
@@ -56,12 +55,13 @@ class ModalBottomSheet extends StatelessWidget {
 
             Obx(() => Wrap(
                   spacing: 8,
-                  children: categories.map((cat) {
-                    final selected = controller.category.value == cat;
+                  children: controller.category.map((cat) {
+                    final selected = controller.selectedCategory.value == cat;
                     return ChoiceChip(
-                      label: Text(cat),
+                      label: Text(cat.namaCategory),
                       selected: selected,
-                      onSelected: (_) => controller.category.value = cat,
+                      onSelected: (_) =>
+                          controller.selectedCategory.value = cat,
                     );
                   }).toList(),
                 )),
@@ -121,7 +121,22 @@ class ModalBottomSheet extends StatelessWidget {
                   )),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            Text(
+              "Note",
+              style: GoogleFonts.kayPhoDu(fontSize: 16),
+            ),
+            SizedBox(height: 16),
+            TextField(
+              decoration: const InputDecoration(
+                hintText: "Note",
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) => controller.note.value = value,
+            ),
+
+            SizedBox(height: 24),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

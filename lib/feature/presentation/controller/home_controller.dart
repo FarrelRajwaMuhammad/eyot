@@ -1,11 +1,10 @@
 import 'dart:async';
-
+import 'package:eyot/feature/dashboard/domain/entities/category_data_entity.dart';
 import 'package:eyot/feature/dashboard/domain/entities/task_data_entity.dart';
 import 'package:eyot/feature/dashboard/domain/usecase/remote_repository.dart';
-import 'package:flutter/material.dart';
+import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 class HomeController extends GetxController {
   final taskUseCase TaskUseCase;
@@ -13,6 +12,9 @@ class HomeController extends GetxController {
   HomeController({required this.TaskUseCase});
 
   var tasks = <TaskEntity>[].obs;
+  var category = <CategoryEntity>[].obs;
+  var selectedCategory = Rx<CategoryEntity?>(null);
+  var selectedTaskIndex = RxnInt();
 
   @override
   void onInit() {
@@ -24,6 +26,7 @@ class HomeController extends GetxController {
       userId.value = user.id;
       print('✅ userId berhasil diambil: ${userId.value}');
       getTasks();
+      getCategory();
     } else {
       print('⚠️ Belum login atau user null');
     }
@@ -34,12 +37,36 @@ class HomeController extends GetxController {
     tasks.value = result;
   }
 
+  void toggleSelected(int index) {
+    if (selectedTaskIndex.value == index) {
+      selectedTaskIndex.value = null;
+    } else {
+      selectedTaskIndex.value = index;
+    }
+  }
+
+  Future<void> getCategory() async {
+    try {
+      log("getCategory() DIPANGGIL");
+      final result = await TaskUseCase.getCategory();
+      log("HASIL: $result");
+
+      category.assignAll(result);
+      log("CATEGORY terisi ${category.length} data");
+    } catch (e, s) {
+      log("❌ ERROR getCategory: $e");
+      log("STACKTRACE: $s");
+    } finally {
+      log("getCategory() SELESAI");
+    }
+  }
+
   var userId = ''.obs;
   var title = ''.obs;
-  var category = ''.obs;
   var priority = ''.obs;
   var remindAt = DateTime.now().obs;
   var countdownText = ''.obs;
+  var note = ''.obs;
 
   Future<void> loadTasks(String userId) async {
     final result = await TaskUseCase(userId);
@@ -47,14 +74,19 @@ class HomeController extends GetxController {
   }
 
   Future<void> addTask(String userId) async {
+    if (selectedCategory.value == null) {
+      Get.snackbar("Error", "Silahkan pilih kategori");
+      return;
+    }
+
     final newTask = TaskEntity(
-      id: Uuid().v4(),
       title: title.value,
-      category: category.value,
       priority: priority.value,
       userId: userId,
       remindAt: remindAt.value,
       isDone: false,
+      note: note.value,
+      CategoryId: selectedCategory.value!.CategoryId,
     );
 
     await TaskUseCase.repository.addTask(newTask);
@@ -65,22 +97,7 @@ class HomeController extends GetxController {
 
   void clearFields() {
     title.value = '';
-    category.value = '';
     priority.value = '';
     remindAt.value = DateTime.now();
-  }
-
-  void startCountdown() {
-    Timer.periodic(Duration(seconds: 1), (timer) {
-      final now = DateTime.now();
-      final remaining = remindAt.value.difference(now);
-      if (remaining.isNegative) {
-        countdownText.value = 'Waktu habis';
-        timer.cancel();
-      } else {
-        countdownText.value =
-            '${remaining.inHours.toString().padLeft(2, '0')}:${(remaining.inMinutes % 60).toString().padLeft(2, '0')}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}';
-      }
-    });
   }
 }
