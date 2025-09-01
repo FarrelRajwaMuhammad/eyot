@@ -27,6 +27,8 @@ class RemoteDatasourceImpl implements RemoteDatasource {
     return (response as List).map((json) => TaskModel.fromJson(json)).toList();
   }
 
+  
+
   Future<List<CategoryModel>> getCategory() async {
     final response = await client.from('categories').select();
     print("RAW RESPONSE: $response");
